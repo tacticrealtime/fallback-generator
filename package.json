@@ -1,0 +1,22 @@
+{
+  "name": "fallback-generator",
+  "version": "0.0.1",
+  "description": "Utility for automatic generation fallback images for creatives",
+  "main": "generator.js",
+  "bin": {
+    "fallback-generator": "./generator.js"
+  },
+  "author": "TACTIC™ Real-Time Marketing",
+  "repository": "github:tacticrealtime/fallback-generator",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "commander": "^2.15.1",
+    "http-server": "^0.11.1",
+    "jsonfile": "^4.0.0",
+    "file-exists": "^5.0.1",
+    "puppeteer": "^1.2.0",
+    "random-id": "0.0.2",
+    "random-user-agent": "^1.0.0",
+    "tinify": "^1.5.0"
+  }
+}
