@@ -212,29 +212,30 @@ const validatePath = async function(imgSrc, bgColor, borderColor, fallbackPage) 
 
     let relativeImgSrc = './' + path.relative(process.cwd(), appDir);
 
-    if (imgSrc.indexOf("http://") == 0 || imgSrc.indexOf("https://") == 0) {
-
-        await urlExists(imgSrc, function(err, exists) {
-            if (!exists) {
-                imgSrc = relativeImgSrc + '/res/logo.svg';
-                printWarning('Invalid link source, using default instead.');
-            }
-        });
-
-    } else {
-
-        if (!fileExists.sync(imgSrc)) {
-            imgSrc = relativeImgSrc + '/res/logo.svg';
-            printWarning('Local logotype source is not found, using default instead.');
-        }
-    }
-
     if (!fileExists.sync(fallbackPage)) {
         fallbackPage = appDir + '/res/fallback.html';
         defaultFallback = true;
         printWarning('fallback.html is not found, using default instead.');
-    }
 
+        if (imgSrc.indexOf("http://") == 0 || imgSrc.indexOf("https://") == 0) {
+
+            await urlExists(imgSrc, function(err, exists) {
+                if (!exists) {
+                    imgSrc = relativeImgSrc + '/res/logo.svg';
+                    printWarning('Invalid link source, using default instead.');
+                }
+            });
+
+        } else {
+
+            if (!fileExists.sync(imgSrc)) {
+                imgSrc = relativeImgSrc + '/res/logo.svg';
+                printWarning('Local logotype source is not found, using default instead.');
+            }
+        }
+
+    }
+    
     const manifestFullPath = './manifest.json';
 
     if (fileExists.sync(manifestFullPath)) {
