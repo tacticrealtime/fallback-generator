@@ -1,6 +1,6 @@
 {
   "name": "fallback-generator",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Utility for automatic generation of fallback images for creatives",
   "main": "generator.js",
   "bin": {
@@ -10,6 +10,7 @@
   "repository": "github:tacticrealtime/fallback-generator",
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "chalk": "^2.3.2",
     "commander": "^2.15.1",
     "http-server": "^0.11.1",
     "jsonfile": "^4.0.0",

@@ -17,7 +17,7 @@ const httpServer = require('http-server');
 const randomUserAgent = require('random-user-agent');
 const randomId = require('random-id');
 const path = require('path');
-
+const chalk = require('chalk');
 const appDir = path.dirname(require.main.filename);
 const rootPath = '.';
 
@@ -25,7 +25,7 @@ const fallbackHtml = `fallback_${randomId()}.html`;
 const fileExists = require('file-exists');
 const jsonFile = require('jsonfile');
 
-const tinify = require("tinify");
+const tinify = require('tinify');
 tinify.key = "2h3Kj4gzKF87wDBQC5yfn69j036822MD";
 
 const net = require('net');
@@ -40,7 +40,7 @@ const config =
         "port": 8000
     },
     "puppeteer": {
-        "headless": false
+        "headless": true
     }
 };
 
@@ -49,6 +49,23 @@ let port = config.server.port;
 
 let formatList = [];
 let defaultFallback = false;
+
+
+const printStatus = function(status) {
+    console.log(chalk.cyan(status));
+};
+
+const printError = function(status) {
+    console.log(chalk.red(status));
+};
+
+const printWarning = function(status) {
+    console.log(chalk.yellow(status));
+};
+
+const printLog = function(log) {
+    console.log(chalk.green(log));
+};
 
 function getAvailablePort (startingAt) {
 
@@ -98,7 +115,6 @@ const runInBrowser = async function(formatList, imgSrc , bgColor, borderColor) {
     await page.goto(`http://localhost:${port}/${fallbackHtml}`, {waitUntil:'networkidle2'});
 
     if (defaultFallback) {
-
         await page.evaluate((imgSrc, bgColor, borderColor) => {
             var elem = document.createElement("img");
             document.getElementById("container").appendChild(elem);
@@ -106,7 +122,6 @@ const runInBrowser = async function(formatList, imgSrc , bgColor, borderColor) {
             document.body.style.backgroundColor = bgColor;
             document.querySelector(".border").style.borderColor = borderColor;
         }, imgSrc, bgColor, borderColor);
-
     }
 
     await page.waitFor(config.waitingTime.insert);
@@ -116,17 +131,16 @@ const runInBrowser = async function(formatList, imgSrc , bgColor, borderColor) {
         for (const format of formatList) {
 
             await page.setViewport({ width: format.width, height: format.height });
-            console.log('Working on fallback for '+format.width+'x'+format.height);
+            printLog('Working on fallback for '+format.width+'x'+format.height);
             await page.screenshot({path: format.path, type: format.ext});
 
-            // TinyPNG
             var source = tinify.fromFile(format.path);
             source.toFile(format.path);
 
         }
     }
     else {
-        console.log('FormatList not found!');
+        printError('FormatList not found!');
     }
 
     await browser.close();
@@ -134,28 +148,28 @@ const runInBrowser = async function(formatList, imgSrc , bgColor, borderColor) {
 
 const validateSize = function(size) {
     if (size == null || typeof size !== 'object') {
-        console.log('One or more sizes are empty or not objects!');
+        printError('One or more sizes are empty or not objects!');
     }
     else if (size.name == null || typeof size.name !== 'string') {
-        console.log('One or more sizes have empty or missing names!');
+        printError('One or more sizes have empty or missing names!');
     }
     else if (size.width == null || size.height == null) {
-        console.log(`"${size.name}" format's dimensions are missing!`);
+        printError(`"${size.name}" format's dimensions are missing!`);
     }
     else if (size.width === " " || size.height === " " || size.width === "" || size.height === "") {
-        console.log(`"${size.name}" format's dimension is an empty string!`);
+        printError(`"${size.name}" format's dimension is an empty string!`);
     }
     else if (size.fallback == null) {
-        console.log(`"${size.name}" format's 'fallback' property is missing.`);
+        printError(`"${size.name}" format's 'fallback' property is missing.`);
     }
     else if (size.fallback.static == null) {
-        console.log(`"${size.name}" format's 'fallback' object is missing 'static' property.`);
+        printError(`"${size.name}" format's 'fallback' object is missing 'static' property.`);
     }
     else if (typeof size.fallback.static !== 'string') {
-        console.log(`"${size.name}" format's fallback 'static' property is not a string.`);
+        printError(`"${size.name}" format's fallback 'static' property is not a string.`);
     }
     else if (!new RegExp("^.*\.(png|jpg)$").test(size.fallback.static.toLowerCase())) {
-        console.log(`"${size.name}" Fallback generator supports only PNG and JPG image formats.`);
+        printError(`"${size.name}" Fallback generator supports only PNG and JPG image formats.`);
     }
     else {
         let filetype = path.parse(size.fallback.static).ext.replace(".", "").toLowerCase();
@@ -173,7 +187,7 @@ const validateSize = function(size) {
 };
 
 const validateFormats = function(manifest) {
-    console.log('Starting formats validation...');
+    printStatus('Starting formats validation...');
 
     const sizes = manifest.sizes;
 
@@ -184,47 +198,42 @@ const validateFormats = function(manifest) {
             });
         }
         catch (e) {
-            console.log('Could not validate formats.');
+            printError('Could not validate formats.');
         }
     }
     else {
-        console.log('Formats were not found!');
+        printError('Formats were not found!');
     }
 };
 
 const validatePath = async function(imgSrc, bgColor, borderColor, fallbackPage) {
 
-    console.log('Main sss fallback generation...' , imgSrc, bgColor, borderColor, fallbackPage);
+    printStatus('Validating paths and attributes...');
 
-    if (!imgSrc) {
-        //imgSrc = appDir + '/res/logo.svg';
-        imgSrc = './node_modules/fallback-generator/res/logo.svg';
-    }
+    let relativeImgSrc = './' + path.relative(process.cwd(), appDir);
 
-    imgSrc = './node_modules/fallback-generator/res/logo.svg';
+    if (imgSrc.indexOf("http://") == 0 || imgSrc.indexOf("https://") == 0) {
 
-    console.log("OPOP",fileExists.sync(imgSrc));
+        await urlExists(imgSrc, function(err, exists) {
+            if (!exists) {
+                imgSrc = relativeImgSrc + '/res/logo.svg';
+                printWarning('Invalid link source, using default instead.');
+            }
+        });
 
-    if (!fileExists.sync(imgSrc)) {
-        fallbackPage = appDir + '/res/fallback.html';
-        defaultFallback = true;
-        console.log("fallback.html was not found, using default instead.");
+    } else {
+
+        if (!fileExists.sync(imgSrc)) {
+            imgSrc = relativeImgSrc + '/res/logo.svg';
+            printWarning('Local logotype source is not found, using default instead.');
+        }
     }
 
     if (!fileExists.sync(fallbackPage)) {
         fallbackPage = appDir + '/res/fallback.html';
         defaultFallback = true;
-        console.log("fallback.html was not found, using default instead.");
+        printWarning('fallback.html is not found, using default instead.');
     }
-
-    // if (!fallbackPage) {
-    //     fallbackPage = appDir + '/res/fallback.html';
-    //     defaultFallback = true;
-    // }
-
-    return;
-
-    console.log('Starting fallback generation...' , imgSrc, bgColor, borderColor, fallbackPage);
 
     const manifestFullPath = './manifest.json';
 
@@ -234,7 +243,7 @@ const validatePath = async function(imgSrc, bgColor, borderColor, fallbackPage) 
             await validateFormats(jsonFile.readFileSync(manifestFullPath));
 
         } catch (e) {
-            console.log('"manifest.json" is not valid!');
+            printError('"manifest.json" is not valid!');
         }
 
         try {
@@ -245,18 +254,17 @@ const validatePath = async function(imgSrc, bgColor, borderColor, fallbackPage) 
             deleteFallbackPage(rootPath);
             stopServer();
 
-            console.log("FINISHED");
+            printStatus('Generation is finished.');
 
         } catch (e) {
-            console.log('Preview init error!');
+            printError('Preview init error!');
         }
 
     }
     else {
-        console.log('"manifest.json" is not found!');
+        printError('"manifest.json" is not found!');
     }
 
 };
 
-console.log("alarm", program.logo , program.bg , program.border, program.html, appDir + '/res/fallback.html');
 validatePath(program.logo , program.bg , program.border, program.html);
