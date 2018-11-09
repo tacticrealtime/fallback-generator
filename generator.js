@@ -159,6 +159,12 @@ const validateSize = function(size) {
     else if (size.width === " " || size.height === " " || size.width === "" || size.height === "") {
         printError(`"${size.name}" format's dimension is an empty string!`);
     }
+    else if (size.width.toString().includes("%") || size.height.toString().includes("%")) {
+        printWarning(`Skipping "${size.name}" because dimensions can't be percentage.`);
+    }
+    else if ( !/^\d+$/.test(size.width.toString()) || !/^\d+$/.test(size.height.toString()) ) {
+        printWarning(`Skipping "${size.name}" because dimensions are not integers.`);
+    }
     else if (size.fallback == null) {
         printError(`"${size.name}" format's 'fallback' property is missing.`);
     }
@@ -177,8 +183,8 @@ const validateSize = function(size) {
         if (filetype == 'jpg') filetype = 'jpeg';
 
         let formatSize = {
-            width:size.width,
-            height:size.height,
+            width:parseInt(size.width),
+            height:parseInt(size.height),
             path:size.fallback.static,
             ext:filetype
         };
@@ -235,7 +241,7 @@ const validatePath = async function(imgSrc, bgColor, borderColor, fallbackPage) 
         }
 
     }
-    
+
     const manifestFullPath = './manifest.json';
 
     if (fileExists.sync(manifestFullPath)) {

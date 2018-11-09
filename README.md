@@ -35,13 +35,11 @@ Parameter | Value | Description | Default value
 
 This utility should be installed as dev dependency of creative.
 
-Example:
+Run:
 
-`npm install --save-dev github:tacticrealtime/fallback-generator`
+`npm install --save-dev github:tacticrealtime/fallback-generator` inside directory of creative.
 
-inside directory of creative.
-
-Then the following script can be added to package.json:
+Then add the following script to package.json:
 ```
 "generate-fallbacks": "./node_modules/fallback-generator/generator.js",
 ```
