@@ -12,7 +12,7 @@ If you specify a custom HTML-file path fallback generator will open your HTML-fi
 
 # Usage
 
-Justs run `npm run generate-fallbacks` inside the directory of creative.
+Just run `npm run generate-fallbacks` inside the directory of creative.
 
 Additional parameters can be added for the script using `npm run generate-fallbacks -- [flags]`
 
@@ -34,8 +34,11 @@ Parameter | Value | Description | Default value
 # Installation
 
 This utility should be installed as dev dependency of creative.
-Run:
+
+Example:
+
 `npm install --save-dev github:tacticrealtime/fallback-generator`
+
 inside directory of creative.
 
 Then the following script can be added to package.json:
