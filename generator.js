@@ -4,13 +4,12 @@
 const program = require('commander');
 
 program
-    .version(require('../package.json').version)
-    .usage('[pathLoc]')
-    .description('Specify path to directory where creative is unzipped (manifest.json must be here). By default current path is used.')
+    .version(require('./package.json').version)
+    .option('-l, --logo [logo source]', 'Add logotype source.', './assets/logotype.png')
+    .option('-b, --bg [css color]', 'Add background color.', 'white')
+    .option('-r, --border [css color]', 'Add border color.', 'black')
+    .option('-h, --html [custom path]', 'Add custom fallback.html path.', './fallback.html')
     .parse(process.argv);
-
-const pathLoc = program.args.shift() || '.';
-
 
 const puppeteer = require('puppeteer');
 const fs = require('fs');
@@ -20,6 +19,7 @@ const randomId = require('random-id');
 const path = require('path');
 
 const appDir = path.dirname(require.main.filename);
+const rootPath = '.';
 
 const fallbackHtml = `fallback_${randomId()}.html`;
 const fileExists = require('file-exists');
@@ -29,9 +29,13 @@ const tinify = require("tinify");
 tinify.key = "2h3Kj4gzKF87wDBQC5yfn69j036822MD";
 
 const net = require('net');
+const urlExists = require('url-exists');
 
 const config =
 {
+    "waitingTime": {
+        "insert": 100
+    },
     "server": {
         "port": 8000
     },
@@ -88,7 +92,7 @@ const runInBrowser = async function(formatList, imgSrc , bgColor, borderColor) {
 
     const browser = await puppeteer.launch({headless:config.puppeteer.headless, args: ['--no-sandbox']});
     const page = await browser.newPage();
-    
+
     page.setUserAgent(randomUserAgent());
 
     await page.goto(`http://localhost:${port}/${fallbackHtml}`, {waitUntil:'networkidle2'});
@@ -105,12 +109,14 @@ const runInBrowser = async function(formatList, imgSrc , bgColor, borderColor) {
 
     }
 
+    await page.waitFor(config.waitingTime.insert);
+
     if (Array.isArray(formatList)) {
 
         for (const format of formatList) {
 
             await page.setViewport({ width: format.width, height: format.height });
-            console.log('Doing fallback for '+format.width+'x'+format.height);
+            console.log('Working on fallback for '+format.width+'x'+format.height);
             await page.screenshot({path: format.path, type: format.ext});
 
             // TinyPNG
@@ -123,7 +129,7 @@ const runInBrowser = async function(formatList, imgSrc , bgColor, borderColor) {
         console.log('FormatList not found!');
     }
 
-   // await browser.close();
+    await browser.close();
 };
 
 const validateSize = function(size) {
@@ -153,9 +159,9 @@ const validateSize = function(size) {
     }
     else {
         let filetype = path.parse(size.fallback.static).ext.replace(".", "").toLowerCase();
-        
-        if (filetype == 'jpg') { filetype = 'jpeg'; }
-        
+
+        if (filetype == 'jpg') filetype = 'jpeg';
+
         let formatSize = {
             width:size.width,
             height:size.height,
@@ -166,11 +172,11 @@ const validateSize = function(size) {
     }
 };
 
-const validateFormats = function(path, manifest) {
+const validateFormats = function(manifest) {
     console.log('Starting formats validation...');
 
     const sizes = manifest.sizes;
-    
+
     if (Array.isArray(sizes)) {
         try {
             sizes.forEach(function(size) {
@@ -186,28 +192,46 @@ const validateFormats = function(path, manifest) {
     }
 };
 
-const validatePath = async function(pathLoc, imgSrc, bgColor, borderColor, fallbackPage) {
-    
-    console.log('Starting fallback generation...');
+const validatePath = async function(imgSrc, bgColor, borderColor, fallbackPage) {
 
-    if (!fallbackPage) {
-        fallbackPage = appDir + '/fallback.html';
-        defaultFallback = true;
+    console.log('Main sss fallback generation...' , imgSrc, bgColor, borderColor, fallbackPage);
+
+    if (!imgSrc) {
+        //imgSrc = appDir + '/res/logo.svg';
+        imgSrc = './node_modules/fallback-generator/res/logo.svg';
     }
 
-    pathLoc = '.';
-    imgSrc = './google.png';
-    bgColor = '#FFFFFF';
-    borderColor = '#000000';
+    imgSrc = './node_modules/fallback-generator/res/logo.svg';
 
-    const manifestFullPath = pathLoc + '/manifest.json';
-    
-    console.log("ffff",manifestFullPath);
+    console.log("OPOP",fileExists.sync(imgSrc));
+
+    if (!fileExists.sync(imgSrc)) {
+        fallbackPage = appDir + '/res/fallback.html';
+        defaultFallback = true;
+        console.log("fallback.html was not found, using default instead.");
+    }
+
+    if (!fileExists.sync(fallbackPage)) {
+        fallbackPage = appDir + '/res/fallback.html';
+        defaultFallback = true;
+        console.log("fallback.html was not found, using default instead.");
+    }
+
+    // if (!fallbackPage) {
+    //     fallbackPage = appDir + '/res/fallback.html';
+    //     defaultFallback = true;
+    // }
+
+    return;
+
+    console.log('Starting fallback generation...' , imgSrc, bgColor, borderColor, fallbackPage);
+
+    const manifestFullPath = './manifest.json';
 
     if (fileExists.sync(manifestFullPath)) {
 
         try {
-            await validateFormats(pathLoc, jsonFile.readFileSync(manifestFullPath));
+            await validateFormats(jsonFile.readFileSync(manifestFullPath));
 
         } catch (e) {
             console.log('"manifest.json" is not valid!');
@@ -215,12 +239,13 @@ const validatePath = async function(pathLoc, imgSrc, bgColor, borderColor, fallb
 
         try {
 
-            copyFallbackPage(pathLoc, fallbackPage);
-            runServer(pathLoc);
+            copyFallbackPage(rootPath, fallbackPage);
+            runServer(rootPath);
             await runInBrowser(formatList, imgSrc, bgColor, borderColor);
-            deleteFallbackPage(pathLoc);
+            deleteFallbackPage(rootPath);
             stopServer();
-            console.log("FINISHED",fallbackPage);
+
+            console.log("FINISHED");
 
         } catch (e) {
             console.log('Preview init error!');
@@ -233,4 +258,5 @@ const validatePath = async function(pathLoc, imgSrc, bgColor, borderColor, fallb
 
 };
 
-validatePath();
+console.log("alarm", program.logo , program.bg , program.border, program.html, appDir + '/res/fallback.html');
+validatePath(program.logo , program.bg , program.border, program.html);
