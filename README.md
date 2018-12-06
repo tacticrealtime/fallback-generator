@@ -12,13 +12,13 @@ If you specify a custom HTML-file path fallback generator will open your HTML-fi
 
 # Usage
 
-Just run `npm run generate-fallbacks` inside the directory of creative.
+Just run `npm run fallback` inside the directory of creative.
 
-Additional parameters can be added for the script using `npm run generate-fallbacks -- [flags]`
+Additional parameters can be added for the script using `npm run fallback -- [flags]`
 
 Example:
 
-`npm run generate-fallbacks -- -b 'red'` This will change the background color to red.
+`npm run fallback -- -b 'red'` This will change the background color to red.
 
 Parameters description:
 
@@ -41,6 +41,6 @@ Run:
 
 Then add the following script to package.json:
 ```
-"generate-fallbacks": "./node_modules/fallback-generator/generator.js",
+"fallback": "./node_modules/fallback-generator/generator.js",
 ```
-After that, you can generate fallbacks for your creative by running `npm run generate-fallbacks` command.
+After that, you can generate fallbacks for your creative by running `npm run fallback` command.

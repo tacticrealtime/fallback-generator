@@ -132,6 +132,13 @@ const runInBrowser = async function(formatList, imgSrc , bgColor, borderColor) {
 
             await page.setViewport({ width: format.width, height: format.height });
             printLog('Working on fallback for '+format.width+'x'+format.height);
+
+            let dir = path.dirname(format.path);
+
+            if (!fs.existsSync(dir)){
+                fs.mkdirSync(dir);
+            }
+            
             await page.screenshot({path: format.path, type: format.ext});
 
             var source = tinify.fromFile(format.path);
