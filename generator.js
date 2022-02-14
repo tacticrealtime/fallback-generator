@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+(async () => {
 const program = require('commander');
 
 program
@@ -29,8 +30,7 @@ const tinify = require('tinify');
 tinify.key = "2h3Kj4gzKF87wDBQC5yfn69j036822MD";
 
 const net = require('net');
-const urlExists = require('url-exists');
-
+const urlExist = await import("url-exist");
 const config =
 {
     "waitingTime": {
@@ -232,12 +232,12 @@ const validatePath = async function(imgSrc, bgColor, borderColor, fallbackPage) 
 
         if (imgSrc.indexOf("http://") == 0 || imgSrc.indexOf("https://") == 0) {
 
-            await urlExists(imgSrc, function(err, exists) {
-                if (!exists) {
-                    imgSrc = relativeImgSrc + '/res/logo.svg';
-                    printWarning('Invalid link source, using default instead.');
-                }
-            });
+            const validUrl = await urlExist(imgSrc);
+
+            if (!validUrl) {
+                imgSrc = relativeImgSrc + "/res/logo.svg";
+                printWarning("Invalid link source, using default instead.");
+            }
 
         } else {
 
@@ -282,3 +282,4 @@ const validatePath = async function(imgSrc, bgColor, borderColor, fallbackPage) 
 };
 
 validatePath(program.logo , program.bg , program.border, program.html);
+})();
