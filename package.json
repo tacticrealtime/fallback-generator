@@ -1,6 +1,6 @@
 {
   "name": "fallback-generator",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Utility for automatic generation of fallback images for creatives",
   "main": "generator.js",
   "bin": {
