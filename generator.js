@@ -26,8 +26,8 @@ const fallbackHtml = `fallback_${randomId()}.html`;
 const fileExists = require('file-exists');
 const jsonFile = require('jsonfile');
 
-const tinify = require('tinify');
-tinify.key = "2h3Kj4gzKF87wDBQC5yfn69j036822MD";
+// const tinify = require('tinify');
+// tinify.key = "2h3Kj4gzKF87wDBQC5yfn69j036822MD";
 
 const net = require('net');
 const urlExist = await import("url-exist");
@@ -141,8 +141,8 @@ const runInBrowser = async function(formatList, imgSrc , bgColor, borderColor) {
             
             await page.screenshot({path: format.path, type: format.ext});
 
-            var source = tinify.fromFile(format.path);
-            source.toFile(format.path);
+            // var source = tinify.fromFile(format.path);
+            // source.toFile(format.path);
 
         }
     }
